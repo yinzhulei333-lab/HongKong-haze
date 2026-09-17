@@ -1,6 +1,6 @@
 # Hong Kong haze
 
-![Hong Kong PM2.5, one year as a spiral of days](out/pm25-year.png)
+![A year of Hong Kong haze, one glowing bar per day](out/pm25-year.png)
 
 ## The phenomenon
 
@@ -17,15 +17,15 @@ concentration in µg/m³, estimated by a weather model.
 
 ## What the picture shows
 
-Each dot is one day, coiled into a spiral that runs from September to September;
-its colour and size are that day's mean PM2.5. The spiral is dominated by amber
-— most days sit at "moderate" to "unhealthy for sensitive groups". Winter burns
-red and violet, peaking at 137.6 µg/m³ in January, while summer is the only
-stretch that cools back to green.
+The picture is 366 bars, one per day, standing on a dark ground. A clean day is
+nearly invisible — its bar is almost the colour of the night — while a dirty
+one flares orange, red and magenta, the tallest reaching 137.6 µg/m³ in
+January. The middle of the year dims: summer is the only stretch where the
+city's air quiets down.
 
-The picture hides two things. Averaging each day to one dot throws away the
-worst single hours, and the numbers come from a model, not a roadside monitor,
-so a real street is dirtier than the spiral shows.
+The picture hides two things. Each bar is a daily mean, so the worst single
+hours of a day are smoothed away, and the numbers come from a model, not a
+roadside monitor, so a real street is dirtier than the bars show.
 
 ## Run it
 

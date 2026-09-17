@@ -15,9 +15,9 @@ internet and the numbers stay auditable.
 
 ## Rejected
 
-Three pictures before this one. A line of all 8,784 hourly values was too noisy
-to read. A calendar of coloured squares was honest but looked like a
-spreadsheet. I kept the spiral: one dot per day, coiled through the year, with
-colour and size carrying the concentration — it is a picture first, and the
-season still reads. I also rejected pandas for a plain dictionary — a list of
-lists was enough, and one less dependency.
+Four pictures before this one. A line of all 8,784 hourly values was too noisy
+to read; a calendar of squares was honest but looked like a spreadsheet; a
+spiral of dots scattered; a set of tree rings looked tidy but ordinary. I kept
+the bars: clean days are drawn almost in the colour of the background, so what
+you see is only the pollution. I also rejected pandas for a plain dictionary —
+a list of lists was enough, and one less dependency.
