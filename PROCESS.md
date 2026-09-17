@@ -15,7 +15,9 @@ internet and the numbers stay auditable.
 
 ## Rejected
 
-Drawing all 8,784 hourly values as one line. That line is so noisy it hides the
-season. I rejected it and averaged each day to a single mean, then drew the WHO
-guideline underneath so the comparison is visible. I also rejected pandas for a
-plain dictionary — a list of lists was enough, and one less dependency.
+Three pictures before this one. A line of all 8,784 hourly values was too noisy
+to read. A calendar of coloured squares was honest but looked like a
+spreadsheet. I kept the spiral: one dot per day, coiled through the year, with
+colour and size carrying the concentration — it is a picture first, and the
+season still reads. I also rejected pandas for a plain dictionary — a list of
+lists was enough, and one less dependency.

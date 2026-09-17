@@ -4,24 +4,23 @@
 # ///
 
 """
-A year of Hong Kong haze as a calendar — one square per day.
+A year of Hong Kong haze, coiled into a spiral.
 
     uv run plot.py
 
-8,784 hourly PM2.5 values collapse to 366 daily means, laid out as a calendar
-where each day's colour is its air. The palette is the AQI ladder (green = good,
-purple = very unhealthy), so the picture reads as a health map rather than a
-line graph.
+8,784 hourly PM2.5 values collapse to 366 daily means. Each day is one dot on a
+spiral that starts in September and winds outward through a full year; the dot's
+colour runs from green (clean) to purple (heavy) and its size grows with the
+concentration. The result is a data picture, not a chart: winter flares red and
+violet near the outer turns, summer cools back to green.
 """
 
 import json
-from datetime import date, timedelta
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import BoundaryNorm, ListedColormap
-from matplotlib.patches import Patch
+from matplotlib.colors import LinearSegmentedColormap
 
 FILE = "hk-pm25-2026.json"
 PICTURE = "pm25-year.png"
@@ -41,81 +40,61 @@ def main():
     times = raw["hourly"]["time"]
     pm25 = raw["hourly"]["pm2_5"]
 
-    # 8,784 hourly values -> 366 daily means
+    # hourly -> daily mean
     by_day = {}
     for t, v in zip(times, pm25):
         if v is None:
             continue
         by_day.setdefault(t[:10], []).append(v)
     days = sorted(by_day)
-    mean = {d: sum(by_day[d]) / len(by_day[d]) for d in days}
-    print(f"{len(days)} days, daily mean from {min(mean.values()):.1f} "
-          f"to {max(mean.values()):.1f} ug/m3")
+    values = np.array([sum(by_day[d]) / len(by_day[d]) for d in days])
+    print(f"{len(days)} days, daily mean from {values.min():.1f} to {values.max():.1f} ug/m3")
 
-    start = date.fromisoformat(days[0])
-    end = date.fromisoformat(days[-1])
-    first_monday = start - timedelta(days=start.weekday())
-    n_weeks = (end - first_monday).days // 7 + 2
+    n = len(days)
+    idx = np.arange(n)
+    theta = 2 * np.pi * idx / 30.44          # ~12 turns across the year
+    r = 0.55 + 0.85 * idx / (n - 1)          # oldest day at the centre
 
-    # grid: row = weekday (Mon..Sun), column = week
-    grid = np.full((7, n_weeks), np.nan)
-    for d in days:
-        day = date.fromisoformat(d)
-        offset = (day - first_monday).days
-        grid[offset % 7, offset // 7] = mean[d]
+    # green (clean) -> yellow -> orange -> red -> violet (heavy)
+    stops = ["#0f2e1a", "#2e7d32", "#9ccc65", "#fdd835",
+             "#fb8c00", "#e53935", "#8e24aa", "#2a0a3d"]
+    cmap = LinearSegmentedColormap.from_list("haze", stops)
 
-    # AQI-style palette for PM2.5, ug/m3
-    levels = [0, 15, 35, 55, 75, 110, 250]
-    colors = ["#2e7d32", "#f9a825", "#ef6c00", "#d32f2f", "#7b1fa2", "#4527a0"]
-    cmap = ListedColormap(colors)
-    cmap.set_bad("#ffffff")
-    norm = BoundaryNorm(levels, cmap.N)
+    fig = plt.figure(figsize=(11, 11), facecolor="#0b0b11")
+    ax = fig.add_subplot(111, projection="polar")
+    ax.set_facecolor("#0b0b11")
 
-    fig, ax = plt.subplots(figsize=(14, 5.5))
-    ax.pcolormesh(np.flipud(grid), cmap=cmap, norm=norm,
-                  edgecolor="white", linewidth=0.9)
+    sizes = 5 + values * 1.9
+    # a soft halo under every dot; the heavy days flare through it
+    ax.scatter(theta, r, c=values, cmap=cmap, s=sizes * 6,
+               vmin=0, vmax=75, alpha=0.16, linewidths=0)
+    ax.scatter(theta, r, c=values, cmap=cmap, s=sizes, vmin=0, vmax=75,
+               alpha=0.95, linewidths=0)
 
-    # weekday labels, Monday on top
-    ax.set_yticks(np.arange(7) + 0.5)
-    ax.set_yticklabels(["Sun", "Sat", "Fri", "Thu", "Wed", "Tue", "Mon"])
-    ax.tick_params(axis="y", length=0)
-    ax.set_ylim(0, 7)
+    ax.set_ylim(0, 1.52)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.grid(False)
+    ax.spines["polar"].set_visible(False)
 
-    # month labels along the top
-    ticks, labels = [], []
-    y, m = start.year, start.month
-    while True:
-        first = date(y, m, 1)
-        if first > end:
-            break
-        col = max(0, (first - first_monday).days // 7)
-        ticks.append(col + 0.5)
-        labels.append(first.strftime("%b"))
-        m += 1
-        if m == 13:
-            m, y = 1, y + 1
-    ax.set_xticks(ticks)
-    ax.set_xticklabels(labels)
-    ax.tick_params(axis="x", length=0)
-    ax.set_xlim(0, n_weeks)
+    fig.text(0.5, 0.955, "a year of Hong Kong air", fontsize=21,
+             fontweight="bold", color="#f5f5f2", ha="center", va="top")
+    fig.text(0.5, 0.905, "one dot per day, coiled from September to September  ·  colour and size = daily PM2.5",
+             fontsize=10, color="#8a8a93", ha="center", va="top")
 
-    # title and subtitle
-    fig.text(0.015, 0.935, "365 days of Hong Kong air",
-             fontsize=17, fontweight="bold", va="top")
-    fig.text(0.015, 0.865, "one square per day, coloured by daily mean PM2.5 (ug/m3)  ·  Open-Meteo  ·  22.32°N, 114.17°E",
-             fontsize=10, color="#666666", va="top")
-
-    # AQI legend along the bottom
-    handles = [Patch(color=c) for c in colors]
-    names = ["Good  <15", "Moderate  15-35", "Unhealthy (sensitive)  35-55",
-             "Unhealthy  55-75", "Very unhealthy  75-110", "Hazardous  >110"]
-    fig.legend(handles, names, loc="lower center", ncol=6,
-               frameon=False, fontsize=8.5, bbox_to_anchor=(0.5, 0.01))
-
-    fig.subplots_adjust(left=0.05, right=0.99, top=0.82, bottom=0.14)
+    # a thin colour key under the title
+    key_ax = fig.add_axes([0.36, 0.055, 0.28, 0.016])
+    grad = np.linspace(0, 1, 256).reshape(1, -1)
+    key_ax.imshow(grad, aspect="auto", cmap=cmap)
+    key_ax.set_xticks([])
+    key_ax.set_yticks([])
+    for s in key_ax.spines.values():
+        s.set_visible(False)
+    fig.text(0.35, 0.04, "clean", color="#8a8a93", fontsize=9, ha="left", va="center")
+    fig.text(0.65, 0.04, "heavy  (µg/m³)", color="#8a8a93", fontsize=9, ha="left", va="center")
 
     OUT.mkdir(exist_ok=True)
-    fig.savefig(OUT / PICTURE, dpi=150, facecolor="white")
+    fig.savefig(OUT / PICTURE, dpi=150, facecolor="#0b0b11")
     print(f"saved out/{PICTURE}")
     plt.show()
 

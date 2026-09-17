@@ -1,6 +1,6 @@
 # Hong Kong haze
 
-![Hong Kong daily mean PM2.5, one year](out/pm25-year.png)
+![Hong Kong PM2.5, one year as a spiral of days](out/pm25-year.png)
 
 ## The phenomenon
 
@@ -17,15 +17,15 @@ concentration in µg/m³, estimated by a weather model.
 
 ## What the picture shows
 
-Each square is one day, laid out as a calendar, and its colour is that day's
-mean PM2.5 on the AQI ladder. The year is dominated by yellow and orange — most
-days sit at "moderate" to "unhealthy for sensitive groups". Winter brings the
-reds and purples, peaking above 130 µg/m³ in January, while summer (June to
-July) is the only season that reaches green.
+Each dot is one day, coiled into a spiral that runs from September to September;
+its colour and size are that day's mean PM2.5. The spiral is dominated by amber
+— most days sit at "moderate" to "unhealthy for sensitive groups". Winter burns
+red and violet, peaking at 137.6 µg/m³ in January, while summer is the only
+stretch that cools back to green.
 
-The picture hides two things. Averaging each day to one square throws away the
+The picture hides two things. Averaging each day to one dot throws away the
 worst single hours, and the numbers come from a model, not a roadside monitor,
-so a real street is dirtier than the calendar shows.
+so a real street is dirtier than the spiral shows.
 
 ## Run it
 
