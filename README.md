@@ -17,14 +17,15 @@ concentration in µg/m³, estimated by a weather model.
 
 ## What the picture shows
 
-Each point is the mean PM2.5 of one day, averaged from its 24 hourly values. The
-line climbs through autumn, peaks above 130 µg/m³ in January, and drops below
-10 µg/m³ in summer. The dashed line is the World Health Organization 24-hour
-guideline of 15 µg/m³; the air sits above it almost every day of the year.
+Each square is one day, laid out as a calendar, and its colour is that day's
+mean PM2.5 on the AQI ladder. The year is dominated by yellow and orange — most
+days sit at "moderate" to "unhealthy for sensitive groups". Winter brings the
+reds and purples, peaking above 130 µg/m³ in January, while summer (June to
+July) is the only season that reaches green.
 
-The picture hides two things. Averaging each day to one number throws away the
+The picture hides two things. Averaging each day to one square throws away the
 worst single hours, and the numbers come from a model, not a roadside monitor,
-so a real street is dirtier than the line shows.
+so a real street is dirtier than the calendar shows.
 
 ## Run it
 

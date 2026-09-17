@@ -1,26 +1,30 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["matplotlib"]
+# dependencies = ["matplotlib", "numpy"]
 # ///
 
 """
-Read the JSON in data/, make one picture, save it to out/.
+A year of Hong Kong haze as a calendar — one square per day.
 
     uv run plot.py
 
-8784 hourly PM2.5 values become 366 daily means, drawn as one line. The dashed
-line is the WHO 24-hour guideline (15 µg/m³), so the picture shows not just the
-numbers but how much of the year the air is above it.
+8,784 hourly PM2.5 values collapse to 366 daily means, laid out as a calendar
+where each day's colour is its air. The palette is the AQI ladder (green = good,
+purple = very unhealthy), so the picture reads as a health map rather than a
+line graph.
 """
 
 import json
-from datetime import datetime
+from datetime import date, timedelta
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import BoundaryNorm, ListedColormap
+from matplotlib.patches import Patch
 
-FILE = "hk-pm25-2026.json"     # the same name as in fetch.py
-PICTURE = "pm25-year.png"      # what goes into out/, and into the README
+FILE = "hk-pm25-2026.json"
+PICTURE = "pm25-year.png"
 
 HERE = Path(__file__).parent
 DATA = HERE / "data" / FILE
@@ -36,34 +40,82 @@ def main():
     raw = load(DATA)
     times = raw["hourly"]["time"]
     pm25 = raw["hourly"]["pm2_5"]
-    print(f"{DATA.name}: {len(times)} hourly values")
-    print(f"first: {times[0]}  PM2.5 = {pm25[0]}")
-    print(f"last:  {times[-1]}  PM2.5 = {pm25[-1]}")
 
-    # one number per hour becomes one number per day (the mean)
+    # 8,784 hourly values -> 366 daily means
     by_day = {}
     for t, v in zip(times, pm25):
-        if v is None:                 # missing values
+        if v is None:
             continue
         by_day.setdefault(t[:10], []).append(v)
-
     days = sorted(by_day)
-    xs = [datetime.strptime(d, "%Y-%m-%d") for d in days]
-    ys = [sum(by_day[d]) / len(by_day[d]) for d in days]
-    print(f"{len(days)} days, daily mean from {min(ys):.1f} to {max(ys):.1f}")
+    mean = {d: sum(by_day[d]) / len(by_day[d]) for d in days}
+    print(f"{len(days)} days, daily mean from {min(mean.values()):.1f} "
+          f"to {max(mean.values()):.1f} ug/m3")
 
-    fig, ax = plt.subplots(figsize=(11, 4))
-    ax.plot(xs, ys, color="#d6591d", linewidth=1.0)
-    ax.axhline(15, color="#1d9e75", linestyle="--", linewidth=1.2)
-    ax.text(xs[0], 16, "WHO 24-hour guideline: 15 µg/m³",
-            color="#0f6e56", fontsize=9)
-    ax.set_xlabel("date")
-    ax.set_ylabel("daily mean PM2.5 (µg/m³)")
-    ax.set_title("Hong Kong PM2.5, one year (Open-Meteo)")
-    fig.tight_layout()
+    start = date.fromisoformat(days[0])
+    end = date.fromisoformat(days[-1])
+    first_monday = start - timedelta(days=start.weekday())
+    n_weeks = (end - first_monday).days // 7 + 2
+
+    # grid: row = weekday (Mon..Sun), column = week
+    grid = np.full((7, n_weeks), np.nan)
+    for d in days:
+        day = date.fromisoformat(d)
+        offset = (day - first_monday).days
+        grid[offset % 7, offset // 7] = mean[d]
+
+    # AQI-style palette for PM2.5, ug/m3
+    levels = [0, 15, 35, 55, 75, 110, 250]
+    colors = ["#2e7d32", "#f9a825", "#ef6c00", "#d32f2f", "#7b1fa2", "#4527a0"]
+    cmap = ListedColormap(colors)
+    cmap.set_bad("#ffffff")
+    norm = BoundaryNorm(levels, cmap.N)
+
+    fig, ax = plt.subplots(figsize=(14, 5.5))
+    ax.pcolormesh(np.flipud(grid), cmap=cmap, norm=norm,
+                  edgecolor="white", linewidth=0.9)
+
+    # weekday labels, Monday on top
+    ax.set_yticks(np.arange(7) + 0.5)
+    ax.set_yticklabels(["Sun", "Sat", "Fri", "Thu", "Wed", "Tue", "Mon"])
+    ax.tick_params(axis="y", length=0)
+    ax.set_ylim(0, 7)
+
+    # month labels along the top
+    ticks, labels = [], []
+    y, m = start.year, start.month
+    while True:
+        first = date(y, m, 1)
+        if first > end:
+            break
+        col = max(0, (first - first_monday).days // 7)
+        ticks.append(col + 0.5)
+        labels.append(first.strftime("%b"))
+        m += 1
+        if m == 13:
+            m, y = 1, y + 1
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(labels)
+    ax.tick_params(axis="x", length=0)
+    ax.set_xlim(0, n_weeks)
+
+    # title and subtitle
+    fig.text(0.015, 0.935, "365 days of Hong Kong air",
+             fontsize=17, fontweight="bold", va="top")
+    fig.text(0.015, 0.865, "one square per day, coloured by daily mean PM2.5 (ug/m3)  ·  Open-Meteo  ·  22.32°N, 114.17°E",
+             fontsize=10, color="#666666", va="top")
+
+    # AQI legend along the bottom
+    handles = [Patch(color=c) for c in colors]
+    names = ["Good  <15", "Moderate  15-35", "Unhealthy (sensitive)  35-55",
+             "Unhealthy  55-75", "Very unhealthy  75-110", "Hazardous  >110"]
+    fig.legend(handles, names, loc="lower center", ncol=6,
+               frameon=False, fontsize=8.5, bbox_to_anchor=(0.5, 0.01))
+
+    fig.subplots_adjust(left=0.05, right=0.99, top=0.82, bottom=0.14)
 
     OUT.mkdir(exist_ok=True)
-    fig.savefig(OUT / PICTURE, dpi=150)
+    fig.savefig(OUT / PICTURE, dpi=150, facecolor="white")
     print(f"saved out/{PICTURE}")
     plt.show()
 
