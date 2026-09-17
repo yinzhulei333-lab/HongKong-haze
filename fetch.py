@@ -8,20 +8,20 @@ Fetch the numbers once, save the raw reply to data/, and never fetch again.
 
     uv run fetch.py
 
-Change URL and FILE. The default is the Hong Kong Observatory's daily mean
-temperature for 2026, so the template runs before you have touched it and you
-can see what a file looks like when it arrives. It is an example, not your
-phenomenon: handing it in unchanged is handing in nothing.
+One year of hourly PM2.5 and PM10 for Hong Kong, from Open-Meteo's air-quality
+API (no key needed). The reply is JSON, saved byte for byte to data/.
 """
 
 from pathlib import Path
 
 import requests
 
-URL = ("https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
-       "?dataType=CLMTEMP&rformat=csv&station=HKO&year=2026")      # CHANGE ME
-FILE = "hko-daily-mean-temperature-2026.csv"                          # CHANGE ME: say what it is,
-                                                                      # keep the publisher's extension
+URL = ("https://air-quality-api.open-meteo.com/v1/air-quality"
+       "?latitude=22.32&longitude=114.17&hourly=pm10,pm2_5"
+       "&start_date=2025-09-17&end_date=2026-09-17"
+       "&timezone=Asia%2FHong_Kong")
+FILE = "hk-pm25-2026.json"        # one year of Hong Kong PM2.5 and PM10, hourly
+
 HERE = Path(__file__).parent
 DATA = HERE / "data"
 
@@ -36,7 +36,7 @@ def fetch(url, path):
     print(f"asking {url}")
     reply = requests.get(url, timeout=60, headers={"User-Agent": "SD5913 PolyU student"})
     reply.raise_for_status()
-    path.write_bytes(reply.content)      # the raw reply, byte for byte: what arrived is what gets committed
+    path.write_bytes(reply.content)      # the raw reply, byte for byte
     print(f"saved data/{path.name} ({path.stat().st_size // 1024} KB). Now: git add data")
     return path
 
