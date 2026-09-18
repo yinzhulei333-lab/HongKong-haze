@@ -21,7 +21,9 @@ The picture is 366 bars, one per day, standing on a dark ground. A clean day is
 nearly invisible — its bar is almost the colour of the night — while a dirty
 one flares orange, red and magenta, the tallest reaching 137.6 µg/m³ in
 January. The middle of the year dims: summer is the only stretch where the
-city's air quiets down.
+city's air quiets down. The claim the picture makes is simple — clean air is so
+rare in Hong Kong that it nearly disappears, and the eye finds only the
+pollution.
 
 The picture hides two things. Each bar is a daily mean, so the worst single
 hours of a day are smoothed away, and the numbers come from a model, not a
